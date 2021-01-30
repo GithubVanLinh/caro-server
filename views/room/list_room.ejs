@@ -74,6 +74,8 @@
     </div>
 
     <div>
+      <span id="nickname"></span>
+      <span id="room"></span>
       <span id="turn"></span>
     </div>
     <div>
@@ -100,7 +102,10 @@
       // create <svg>
       let boxsize = 30; // kich thuoc cua moi o vuong
       let n = 20; // so luong o vuong tren 1 hang
-      const svg = div.append("svg").attr("width", boxsize*n).attr("height", boxsize*n);
+      const svg = div
+        .append("svg")
+        .attr("width", boxsize * n)
+        .attr("height", boxsize * n);
       //-------------------------------------------------------
       for (let i = 0; i < n; i++) {
         for (let j = 0; j < n; j++) {
@@ -116,12 +121,10 @@
             .on("click", function () {
               let selected = d3.select(this);
               socket.emit("on-box-click", {
-                turn: socket.turn,
                 x: selected.attr("x") / boxsize,
                 y: selected.attr("y") / boxsize,
               });
               console.log({
-                turn: socket.turn,
                 x: selected.attr("x") / boxsize,
                 y: selected.attr("y") / boxsize,
               });
@@ -180,6 +183,8 @@
       document.getElementById("btn_ok").onclick = function () {
         const value = document.getElementById("name").value;
         socket.emit("type-your-name", value);
+
+        document.getElementById("nickname").innerText = value;
         dialog.close();
       };
     });
@@ -201,9 +206,10 @@
           messages.appendChild(item);
         });
       });
-      socket.on("join-room-success", function () {
+      socket.on("join-room-success", function (room_name) {
         clear();
-
+        
+      document.getElementById("room").innerText = room_name;
         showWaitingScreen();
       });
       socket.on("has-2-player", function () {
@@ -234,19 +240,20 @@
 
         // drawboard();
       });
-      socket.on("your-turn", function ({ turn, x, y }) {
+      socket.on("your-turn", function ({ turn }) {
         setTurn(turn);
         socket.turn = turn;
         drawboard();
       });
 
       socket.on("choose-box", function ({ turn, x, y }) {
-        alert("your turn");
+        alert(`your opponent turn ${turn} position (${x},${y})`);
+        // alert("your turn");
       });
 
-      socket.on("error", function({message}) {
+      socket.on("error", function ({ message }) {
         alert(message);
-      })
+      });
       // socket.on("choose-box", function ({ turn }) {
       //   console.log(socket);
       //   alert("your turn");
