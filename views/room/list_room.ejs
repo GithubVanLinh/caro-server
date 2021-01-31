@@ -62,16 +62,32 @@
         background: #efefef;
       }
     </style>
+
+    <script src="/jquery/dist/jquery.js"></script>
   </head>
   <body>
-    <div id="choose_game">
-      <ul id="messages"></ul>
-      <dialog id="type_your_name_dialog">
+    <div id="dialog"></div>
+    <dialog id="dashboard">
+      <div>
+        <button id="create_room">Create new room</button>
+      </div>
+      <div>
+        <button id="join_room">Join a room</button>
+      </div>
+    </dialog>
+    <dialog id="create_room_dialog">
+      <label for="name">Room Name</label>
+      <input id="room_name_input" type="text" placeholder="name" required />
+      <button type="button" id="btn_ok_create_dialog">OK</button>
+    </dialog>
+    <dialog id="choose_room">
+      <ul id="room_list"></ul>
+      <!-- <dialog id="type_your_name_dialog">
         <label for="name">Name Player</label>
         <input id="name" type="text" placeholder="name" required />
         <button type="button" id="btn_ok">OK</button>
-      </dialog>
-    </div>
+      </dialog> -->
+    </dialog>
 
     <div>
       <span id="nickname"></span>
@@ -88,11 +104,6 @@
   </body>
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    function clear() {
-      var bar = document.getElementById("choose_game");
-      bar.hidden = true;
-    }
-
     function drawboard() {
       const div = d3
         .select("body")
@@ -120,14 +131,11 @@
             .style("stroke", "black")
             .on("click", function () {
               let selected = d3.select(this);
-              socket.emit("on-box-click", {
-                x: selected.attr("x") / boxsize,
-                y: selected.attr("y") / boxsize,
-              });
-              console.log({
-                x: selected.attr("x") / boxsize,
-                y: selected.attr("y") / boxsize,
-              });
+              socket.emit(
+                "on-box-click",
+                selected.attr("x") / boxsize,
+                selected.attr("y") / boxsize
+              );
             });
           if ((i + j) % 2 === 0) {
             box.attr("fill", "beige");
@@ -137,26 +145,6 @@
         }
       }
     }
-
-    /**
-     *
-     */
-    // function showDialogReady(socket) {
-    //   var dialog = document.getElementById("dialog_ready");
-    //   dialog.show();
-    //   var buttonReady = dialog.getElementById("btn_ready");
-    //   var buttonCancel = dialog.getElementById("btn_cancel");
-    //   buttonReady.onclick = function () {
-    //     console.log("ready");
-    //     socket.emit("ready");
-    //     dialog.close();
-    //   };
-    //   buttonCancel.onclick = function () {
-    //     console.log("cancel");
-    //     socket.emit("cancel");
-    //     dialog.close();
-    //   };
-    // }
 
     function setTurn(turn) {
       var turnE = document.getElementById("turn");
@@ -171,108 +159,81 @@
       document.getElementById("dialog_waiting").close();
     }
   </script>
+
   <script>
-    var socket = io();
+    function initListener(socket) {
+      socket.on("room-list", onRoomList);
+      socket.on("join-room-success", onRoomSuccess);
+      socket.on("has-2-player", onHas2Player);
+      socket.on("your-turn", onYourTurn);
+      socket.on("choose-box", onChooseBox);
+      socket.on("error", onError);
 
-    var messages = document.getElementById("messages");
-    var input = document.getElementById("input");
-    var dialog = document.getElementById("type_your_name_dialog");
+      //socket area
+      function onRoomList(rooms) {
 
-    socket.on("type-your-name", function () {
-      dialog.show();
-      document.getElementById("btn_ok").onclick = function () {
-        const value = document.getElementById("name").value;
-        socket.emit("type-your-name", value);
-
-        document.getElementById("nickname").innerText = value;
-        dialog.close();
-      };
-    });
-
-    dialog.onclose = function () {
-      console.log("in");
-      socket.emit("room-list", { mes: "mes" });
-
-      socket.on("room-list", function (msg) {
-        console.log(msg);
-        msg.forEach(function (m) {
+        rooms.forEach(function (room) {
+          console.log(room);
+          console.log(room.name);
+          console.log(room.owner);
           var item = document.createElement("button");
-          item.innerText = m;
+          item.innerText = room.name;
 
           item.onclick = function () {
-            socket.emit("join-room", m);
+            socket.emit("join-room", room.owner);
+            document.getElementById("choose_room").close();
+            document.getElementById("dashboard").close();
           };
 
-          messages.appendChild(item);
+          document.getElementById("room_list").appendChild(item);
         });
-      });
-      socket.on("join-room-success", function (room_name) {
-        clear();
-        
-      document.getElementById("room").innerText = room_name;
+      }
+
+      function onRoomSuccess(room) {
+        document.getElementById("room").innerText = room.name;
         showWaitingScreen();
-      });
-      socket.on("has-2-player", function () {
+      }
+
+      function onHas2Player() {
         closeWaitingScreen();
-        // showDialogReady(socket);
-        // var dialog = document.getElementById("dialog_ready");
-        // dialog.show();
-        // var buttonReady = document.getElementById("btn_ready");
-        // var buttonCancel = document.getElementById("btn_cancel");
-        // dialog.onclose = function () {
-        //   alert("ready close");
-        //   socket.on("game-start", function () {
-        //     alert("game start");
-        //   });
-        // };
+      }
 
-        // buttonReady.onclick = function () {
-        //   console.log("ready");
-        //   alert("Ready");
-        //   socket.emit("ready-checked");
-        //   dialog.close();
-        // };
-        // buttonCancel.onclick = function () {
-        //   console.log("cancel");
-        //   socket.emit("cancel");
-        //   dialog.close();
-        // };
-
-        // drawboard();
-      });
-      socket.on("your-turn", function ({ turn }) {
+      function onYourTurn({ turn }) {
         setTurn(turn);
         socket.turn = turn;
         drawboard();
-      });
-
-      socket.on("choose-box", function ({ turn, x, y }) {
+      }
+      function onChooseBox({ turn, x, y }) {
         alert(`your opponent turn ${turn} position (${x},${y})`);
-        // alert("your turn");
-      });
-
-      socket.on("error", function ({ message }) {
+      }
+      function onError({ message }) {
         alert(message);
-      });
-      // socket.on("choose-box", function ({ turn }) {
-      //   console.log(socket);
-      //   alert("your turn");
-      // });
-    };
+      }
 
-    // socket.on("server-send-data", function (msg) {
-    //   var item = document.createElement("button");
-    //   console.log(msg);
-    //   item.innerText = msg;
-    //   messages.appendChild(item);
-    //   window.scrollTo(0, document.body.scrollHeight);
-    // });
-    // socket.on("your_turn", function (msg) {
-    //   var item = document.createElement("li");
-    //   console.log(msg);
-    //   item.textContent = msg;
-    //   messages.appendChild(item);
-    //   window.scrollTo(0, document.body.scrollHeight);
-    // });
+      //-socket listener
+    }
+  </script>
+
+  <script>
+    var socket = io();
+    initListener(socket);
+    var dashboard = document.getElementById("dashboard");
+    dashboard.onclose = function () {};
+    dashboard.show();
+    $("#create_room").click(() => {
+      document.getElementById("create_room_dialog").show();
+      $("#btn_ok_create_dialog").click(() => {
+        value = $("#room_name_input").val();
+        socket.emit("create-room", value);
+
+        document.getElementById("create_room_dialog").close();
+        dashboard.close();
+      });
+    });
+
+    $("#join_room").click(() => {
+      document.getElementById("choose_room").show();
+      socket.emit("room-list");
+    });
   </script>
 </html>
