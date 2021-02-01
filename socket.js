@@ -1,3 +1,5 @@
+const { emit } = require("nodemon");
+
 module.exports = (server) => {
   var io = require("socket.io")(server);
 
@@ -40,6 +42,7 @@ module.exports = (server) => {
      * + leave joined room
      */
     async function leaveRoom(room_name) {
+      RoomService.setRoomStatus(room_name, false);
       if (socket.id == room_name) {
         await deleteARoomByOwnerId();
       } else {
@@ -160,7 +163,7 @@ module.exports = (server) => {
         await resetRoom(room_name);
         await startGame(room_name);
       } else {
-        socket.emit("error", {message: "You are not room's owner"} );
+        socket.emit("error", { message: "You are not room's owner" });
       }
     }
 
@@ -201,36 +204,49 @@ module.exports = (server) => {
       await leaveRoom(socket.room_name);
     }
 
+    async function updateTurn() {
+      if (socket.turn == 1) {
+        await RoomService.setTurn(socket.room_name, 2);
+      } else {
+        await RoomService.setTurn(socket.room_name, 1);
+      }
+      socket.to(socket.room_name).broadcast.emit("choose-box", {
+        x: x,
+        y: y,
+        turn: socket.turn,
+      });
+    }
+
+    async function endgame(winnerTurn) {
+      await resetRoomServerSide();
+      await RoomService.setRoomStatus(socket.room_name, false);
+      io.to(socket.room_name).emit("end-game", winnerTurn);
+    }
+
+    async function checkBoard() {
+      const winnerTurn = await RoomService.checkBoard(socket.room_name);
+      if (winnerTurn) {
+        await endgame(winnerTurn);
+      } else {
+        await updateTurn();
+      }
+    }
+
+    async function checkTurnAndUpdate(turn) {
+      if (turn == socket.turn) {
+        await RoomService.updateBoard(socket.room_name, socket.turn, x, y);
+        await checkBoard();
+      } else {
+        socket.emit("error", { message: "Not your turn" });
+      }
+    }
+
     async function onBoxClick(x, y) {
-      console.log("room_name", socket.room_name);
       try {
         const room = await RoomService.getRoomByOwnerId(socket.room_name);
-        if (room.turn == socket.turn) {
-          await RoomService.updateBoard(socket.room_name, socket.turn, x, y);
-
-          switch (socket.turn) {
-            case 1:
-              await RoomService.setTurn(socket.room_name, 2);
-              break;
-
-            case 2:
-              await RoomService.setTurn(socket.room_name, 1);
-              break;
-            default:
-              break;
-          }
-          socket.to(socket.room_name).broadcast.emit("choose-box", {
-            x: x,
-            y: y,
-            turn: socket.turn,
-          });
-        } else {
-          socket.emit("error", { message: "Not your turn" });
-        }
+        await checkTurnAndUpdate(room.turn);
       } catch (error) {
-        console.log("error", error.message);
         socket.emit("error", { message: error.message });
-        console.log(error.message);
       }
     }
     //--Socket callback

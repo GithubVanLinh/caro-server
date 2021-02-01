@@ -1,4 +1,5 @@
 const Room = require("../game_model/Room");
+const socket = require("../socket");
 
 const rooms = [];
 
@@ -18,8 +19,21 @@ module.exports = {
   resetBoard: resetBoard,
   setRoomStatus: setRoomStatus,
   resetRoom: resetRoom,
+  checkBoard: checkBoard,
 };
 
+function checkBoard(room_name) {
+  const promise = new Promise((resolve, reject) => {
+    rooms.forEach((room) => {
+      if (room.owner === room_name) {
+        const result = room.checkBoard();
+        resolve(result);
+      }
+    });
+    reject(new Error(`${room_name} is not found`));
+  });
+  return promise;
+}
 
 function resetRoom(room_name) {
   return resetBoard(room_name);
@@ -28,9 +42,10 @@ function resetRoom(room_name) {
 
 function resetBoard(room_name) {
   const promise = new Promise((resolve, reject) => {
-    rooms.forEach((room) => {
+    rooms.forEach(async (room) => {
       if (room.owner === room_name) {
         room.resetBoard();
+        await setRoomStatus(room_name, false);
         resolve();
       }
     });

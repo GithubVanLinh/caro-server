@@ -91,6 +91,12 @@ class Room {
   resetBoard() {
     this.board.resetBoard();
   }
+
+  checkBoard(){
+    return this.board.checkBoard();
+  }
+
+
 }
 
 module.exports = Room;
