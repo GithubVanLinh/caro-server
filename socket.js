@@ -12,7 +12,9 @@ module.exports = (server) => {
     socket.on("room-list", onRoomList);
     socket.on("join-room", onJoinRoom);
 
+    socket.on("start-game", onStartGame);
     socket.on("on-box-click", onBoxClick);
+    socket.on("new-game", onNewGame);
 
     socket.on("leave-room", onLeaveRoom); //create & join-room
     socket.on("disconnect", onDisconnect); //create & join-room
@@ -120,10 +122,46 @@ module.exports = (server) => {
       await setFirstTurn(room_name);
     }
 
+    /**
+     *
+     * @param {String} room_name socket id
+     * this function is used to start a game
+     * - Includes:
+     * + Init Turn
+     * + Send event start to client in room
+     * + Start in server's room
+     */
     async function startGame(room_name) {
-      io.to(room_name).emit("has-2-player");
       io.to(room_name).emit("game-start");
       await initTurn(room_name);
+
+      await RoomService.setRoomStatus(room_name, true);
+    }
+
+    async function onStartGame(room_name) {
+      await startGame(room_name);
+    }
+
+    async function resetRoomClientSide(room_name) {
+      io.to(room_name).emit("reset-board");
+    }
+
+    async function resetRoomServerSide(room_name) {
+      await RoomService.resetRoom(room_name);
+    }
+
+    async function resetRoom(room_name) {
+      await resetRoomClientSide(room_name);
+      await resetRoomServerSide(room_name);
+    }
+
+    async function onNewGame(room_name) {
+      if (room_name === socket.id) {
+        await resetRoom(room_name);
+        await startGame(room_name);
+      } else {
+        socket.emit("error", "You are not room's owner");
+      }
     }
 
     async function hasRoomFull(room_name) {
@@ -145,7 +183,8 @@ module.exports = (server) => {
       if (!(await hasRoomFull(room_name))) {
         await joinRoom(room_name);
         if (await hasRoomFull(room_name)) {
-          startGame(room_name);
+          io.to(room_name).emit("has-2-player");
+          // startGame(room_name);
         }
       } else {
         socket.emit("error", { message: `${room_name} was already full` });
@@ -188,8 +227,8 @@ module.exports = (server) => {
           socket.emit("error", { message: "Not your turn" });
         }
       } catch (error) {
-        console.log("error" , error.message);
-        socket.emit("error", {message: error.message});
+        console.log("error", error.message);
+        socket.emit("error", { message: error.message });
         console.log(error.message);
       }
     }

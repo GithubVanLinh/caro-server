@@ -15,8 +15,47 @@ module.exports = {
   updateBoard: updateBoard,
   removeGamerFromRoom: removeGamerFromRoom,
   getRoomsByGamerId: getRoomsByGamerId,
+  resetBoard: resetBoard,
+  setRoomStatus: setRoomStatus,
+  resetRoom: resetRoom,
 };
 
+
+function resetRoom(room_name) {
+  return resetBoard(room_name);
+
+}
+
+function resetBoard(room_name) {
+  const promise = new Promise((resolve, reject) => {
+    rooms.forEach((room) => {
+      if (room.name === room_name) {
+        room.resetBoard();
+        resolve();
+      }
+    });
+    reject(new Error(`${room_name} is not found`));
+  });
+  return promise;
+}
+
+/**
+ * 
+ * @param {String} room_name socketid
+ * @param {Boolean} status is ingame
+ */
+function setRoomStatus(room_name, status) {
+  const promise = new Promise((resolve, reject) => {
+    rooms.forEach((room) => {
+      if (room.name === room_name) {
+        room.ingame = status;
+        resolve(room);
+      }
+    });
+    reject(new Error(`${room_name} is not found`));
+  });
+  return promise;
+}
 /**
  *
  * @param {String} owner
@@ -42,7 +81,7 @@ function getTurn(room_name) {
         resolve(room.turn);
       }
     });
-    reject(new Error(`{room_name} is not found`));
+    reject(new Error(`${room_name} is not found`));
   });
 
   return promise;
@@ -57,7 +96,7 @@ function updateBoard(room_name, turn, x, y) {
         resolve(room);
       }
     });
-    reject(new Error(`{room_name} is not found`));
+    reject(new Error(`${room_name} is not found`));
   });
 
   return promise;
