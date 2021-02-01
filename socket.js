@@ -197,8 +197,8 @@ module.exports = (server) => {
      *
      * @param {String} room_name owner id
      */
-    async function onLeaveRoom(room_name) {
-      leaveRoom(room_name);
+    async function onLeaveRoom() {
+      await leaveRoom(socket.room_name);
     }
 
     async function onBoxClick(x, y) {
