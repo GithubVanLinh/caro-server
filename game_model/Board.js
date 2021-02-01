@@ -70,19 +70,24 @@ class Board {
 
   #checkRow(row) {
     for (i = 0; i <= row.length - 5;) {
-      switch (row[i]) {
-        case row[i + 1]:
+      switch (true) {
+        case row[i] !== row[i + 1]:
+          i = i+1;
           break;
+        case row[i] !== row[i + 2]:
 
-        case row[i + 2]:
+          i = i+2;
           break;
-        case row[i + 3]:
+        case row[i] !== row[i + 3]:
+
+          i = i+3;
           break;
-        case row[i + 4]:
-          break;
-        case row[i + 5]:
+        case row[i] !== row[i + 4]:
+
+          i = i+4;
           break;
         default:
+          i = i+1;
           break;
       }
     }

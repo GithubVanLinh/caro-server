@@ -138,8 +138,8 @@ module.exports = (server) => {
       await RoomService.setRoomStatus(room_name, true);
     }
 
-    async function onStartGame(room_name) {
-      await startGame(room_name);
+    async function onStartGame() {
+      await startGame(socket.id);
     }
 
     async function resetRoomClientSide(room_name) {
