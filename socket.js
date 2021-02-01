@@ -183,7 +183,8 @@ module.exports = (server) => {
       if (!(await hasRoomFull(room_name))) {
         await joinRoom(room_name);
         if (await hasRoomFull(room_name)) {
-          socket.to(room_name).emit("has-2-player");
+          io.to(room_name).emit("has-2-player");
+          socket.to(room_name).emit("you-are-owner");
           // startGame(room_name);
         }
       } else {

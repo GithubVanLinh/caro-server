@@ -1,4 +1,8 @@
+const { getTurn } = require("../game_service/room.game_service");
+
 class Board {
+  #row;
+  #col;
   constructor() {
     this.board = [
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -22,6 +26,8 @@ class Board {
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     ];
+    this.#col = 20;
+    this.#row = 20;
   }
 
   // get board() {
@@ -60,6 +66,47 @@ class Board {
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     ];
+  }
+
+  #checkRow(row) {
+    for (i = 0; i <= row.length - 5;) {
+      switch (row[i]) {
+        case row[i + 1]:
+          break;
+
+        case row[i + 2]:
+          break;
+        case row[i + 3]:
+          break;
+        case row[i + 4]:
+          break;
+        case row[i + 5]:
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  #checkRows() {
+    this.#checkRow(row);
+  }
+  #checkCols() {}
+  #checkXLefts() {}
+  #checkXRights() {}
+
+  checkBoard() {
+    winner =
+      this.#checkRows() ||
+      this.#checkCols() ||
+      this.#checkXLefts() ||
+      this.#checkXRights();
+
+    if (winner) {
+      return winner;
+    } else {
+      return false;
+    }
   }
 }
 module.exports = Board;
