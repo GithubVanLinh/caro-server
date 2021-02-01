@@ -160,7 +160,7 @@ module.exports = (server) => {
         await resetRoom(room_name);
         await startGame(room_name);
       } else {
-        socket.emit("error", "You are not room's owner");
+        socket.emit("error", {message: "You are not room's owner"} );
       }
     }
 
