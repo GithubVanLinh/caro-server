@@ -29,7 +29,7 @@ function resetRoom(room_name) {
 function resetBoard(room_name) {
   const promise = new Promise((resolve, reject) => {
     rooms.forEach((room) => {
-      if (room.name === room_name) {
+      if (room.owner === room_name) {
         room.resetBoard();
         resolve();
       }
@@ -47,7 +47,7 @@ function resetBoard(room_name) {
 function setRoomStatus(room_name, status) {
   const promise = new Promise((resolve, reject) => {
     rooms.forEach((room) => {
-      if (room.name === room_name) {
+      if (room.owner === room_name) {
         room.ingame = status;
         resolve(room);
       }
@@ -77,7 +77,7 @@ function createRoom(owner, name) {
 function getTurn(room_name) {
   const promise = new Promise(function (resolve, reject) {
     rooms.forEach((room) => {
-      if (room.name === room_name) {
+      if (room.owner === room_name) {
         resolve(room.turn);
       }
     });
