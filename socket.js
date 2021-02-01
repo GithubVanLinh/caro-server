@@ -42,13 +42,17 @@ module.exports = (server) => {
      * + leave joined room
      */
     async function leaveRoom(room_name) {
-      RoomService.setRoomStatus(room_name, false);
-      if (socket.id == room_name) {
-        await deleteARoomByOwnerId();
+      if (socket.room_name === room_name) {
+        RoomService.setRoomStatus(room_name, false);
+        if (socket.id == room_name) {
+          await deleteARoomByOwnerId();
+        } else {
+          socket.to(room_name).emit("competitor-leave-room", socket.id);
+          await RoomService.removeGamerFromRoom(room_name, socket.id);
+          socket.leave(room_name);
+        }
       } else {
-        socket.to(room_name).emit("competitor-leave-room", socket.id);
-        await RoomService.removeGamerFromRoom(room_name, socket.id);
-        socket.leave(room_name);
+        socket.emit("error", {message: "You are not in room"});
       }
     }
 
