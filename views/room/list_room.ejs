@@ -168,8 +168,18 @@
       socket.on("your-turn", onYourTurn);
       socket.on("choose-box", onChooseBox);
       socket.on("error", onError);
+      socket.on("room-deleted", onRoomDeleted);
+      socket.on("competitor-leave-room", onCompetitor);
 
       //socket area
+      function onCompetitor() {
+        alert("competitor has left room")
+      }
+
+      function onRoomDeleted() {
+        alert("Room is deleted");
+      }
+
       function onRoomList(rooms) {
 
         rooms.forEach(function (room) {

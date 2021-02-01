@@ -6,13 +6,15 @@ module.exports = {
   createRoom: createRoom,
   getRooms: getRooms,
   getListRoomName: getListRoomName,
-  getRoomByName: getRoom,
+  getRoomByOwnerId: getRoomByOwnerId,
   deleteRoomByOwnerId: deleteRoom,
   getRoomSizeByOwnerId: getSize,
   addGamerToRoom: addGamerToRoom,
   setTurn: setTurn,
   getTurn: getTurn,
   updateBoard: updateBoard,
+  removeGamerFromRoom: removeGamerFromRoom,
+  getRoomsByGamerId: getRoomsByGamerId,
 };
 
 /**
@@ -50,7 +52,7 @@ function updateBoard(room_name, turn, x, y) {
   const promise = new Promise(function (resolve, reject) {
     rooms.forEach((room) => {
       if (room.owner === room_name) {
-          console.log(room);
+        console.log(room);
         room.board.setBoard(x, y, turn);
         resolve(room);
       }
@@ -65,7 +67,7 @@ function addGamerToRoom(room_name, gamer) {
   const promise = new Promise(function (resolve, reject) {
     rooms.forEach((room) => {
       if (room.owner === room_name) {
-          console.log("in");
+        console.log("in");
         room.addGamer(gamer);
         resolve(room);
       }
@@ -111,7 +113,7 @@ function getListRoomName() {
 }
 
 async function getSize(room_name) {
-  const room = await getRoom(room_name);
+  const room = await getRoomByOwnerId(room_name);
   return room.gamers.length;
 }
 
@@ -119,7 +121,7 @@ async function getSize(room_name) {
  *
  * @param {String} name owner(socketid)
  */
-function getRoom(name) {
+function getRoomByOwnerId(name) {
   return new Promise((resolve, reject) => {
     rooms.forEach((room) => {
       if (room.owner === name) {
@@ -142,5 +144,35 @@ function deleteRoom(owner) {
       }
     });
     return reject(new Error(`Room ${owner} is not found`));
+  });
+}
+
+function removeGamerFromRoom(room_name, gamerId) {
+  if (room_name === gamerId) {
+    return deleteRoom(room_name);
+  }
+  return new Promise((resolve, reject) => {
+    rooms.forEach((room, index) => {
+      if (room.owner === room_name) {
+        const status = room.removeGamer(gamerId);
+        if (status == -1) {
+        }
+        return resolve();
+      }
+    });
+    return reject(new Error(`Room ${room_name} is not found`));
+  });
+}
+
+function getRoomsByGamerId(gamerId) {
+  return new Promise((resolve, reject) => {
+    const roomlist = [];
+    rooms.forEach((room, index) => {
+      if (room.gamers.includes(gamerId)) {
+        roomlist.push(room);
+      }
+    });
+
+    return resolve(roomlist);
   });
 }
